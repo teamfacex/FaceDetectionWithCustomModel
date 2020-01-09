@@ -16,17 +16,25 @@ package org.tensorflow.lite.examples.detection;
  * limitations under the License.
  */
 
+import android.annotation.SuppressLint;
 import android.app.Fragment;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.PixelFormat;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.util.Log;
 import android.util.Size;
 import android.util.SparseIntArray;
 import android.view.LayoutInflater;
 import android.view.Surface;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
 import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
@@ -36,11 +44,12 @@ import org.tensorflow.lite.examples.detection.customview.AutoFitTextureView;
 import org.tensorflow.lite.examples.detection.env.ImageUtils;
 import org.tensorflow.lite.examples.detection.env.Logger;
 
+@SuppressLint("ValidFragment")
 public class LegacyCameraConnectionFragment extends Fragment {
   private static final Logger LOGGER = new Logger();
   /** Conversion from screen rotation to JPEG orientation. */
   private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
-
+  public SurfaceView surfaceview;
   static {
     ORIENTATIONS.append(Surface.ROTATION_0, 90);
     ORIENTATIONS.append(Surface.ROTATION_90, 0);
@@ -116,6 +125,7 @@ public class LegacyCameraConnectionFragment extends Fragment {
   /** An additional thread for running tasks that shouldn't block the UI. */
   private HandlerThread backgroundThread;
 
+  @SuppressLint("ValidFragment")
   public LegacyCameraConnectionFragment(
       final Camera.PreviewCallback imageListener, final int layout, final Size desiredSize) {
     this.imageListener = imageListener;
@@ -132,6 +142,48 @@ public class LegacyCameraConnectionFragment extends Fragment {
   @Override
   public void onViewCreated(final View view, final Bundle savedInstanceState) {
     textureView = (AutoFitTextureView) view.findViewById(R.id.texture);
+    surfaceview = (SurfaceView) view.findViewById(R.id.surfaceView);
+
+
+    SurfaceHolder mHolder = surfaceview.getHolder();
+    surfaceview.setZOrderOnTop(true);    // necessary
+    SurfaceHolder sfhTrackHolder = surfaceview.getHolder();
+    sfhTrackHolder.setFormat(PixelFormat.TRANSPARENT);
+
+    mHolder.addCallback(new SurfaceHolder.Callback() {
+      @Override
+      public void surfaceCreated(SurfaceHolder surfaceHolder) {
+
+        float left = (surfaceview.getWidth()-surfaceview.getWidth()*0.7f)/2;
+        float right = left+surfaceview.getWidth()*0.7f;
+        float top = (surfaceview.getHeight()-surfaceview.getHeight()*0.6f)/2;
+        float bottom = top+surfaceview.getHeight()*0.6f;
+        surfaceview.getHeight();
+        Log.e("width",Float.toString(surfaceview.getWidth()*0.7f)+Float.toString(surfaceview.getHeight()*0.6f));
+        Canvas canvas = surfaceHolder.lockCanvas();
+        if (canvas == null) {
+          Log.e("TAG", "Cannot draw onto the canvas as it's null");
+        } else {
+          Paint myPaint = new Paint();
+          myPaint.setColor(Color.rgb(100, 20, 50));
+          myPaint.setStrokeWidth(10);
+          myPaint.setStyle(Paint.Style.STROKE);
+          canvas.drawRect(left, top, right, bottom, myPaint);
+          surfaceHolder.unlockCanvasAndPost(canvas);
+        }
+
+      }
+
+      @Override
+      public void surfaceChanged(SurfaceHolder surfaceHolder, int i, int i1, int i2) {
+
+      }
+
+      @Override
+      public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
+
+      }
+    });
   }
 
   @Override

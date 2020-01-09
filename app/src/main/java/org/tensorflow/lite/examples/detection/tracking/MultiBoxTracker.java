@@ -146,22 +146,22 @@ public class MultiBoxTracker {
             boxPaint.setColor(recognition.color);
 
             float cornerSize = Math.min(trackedPos.width(), trackedPos.height()) / 8.0f;
-//            canvas.drawRoundRect(trackedPos, cornerSize, cornerSize, boxPaint);
+            canvas.drawRoundRect(trackedPos, cornerSize, cornerSize, boxPaint);
 
             canvas.drawCircle(trackedPos.left, trackedPos.top, 5, boxPaint);
             canvas.drawCircle(trackedPos.right, trackedPos.bottom, 5, boxPaint);
 
-            Log.e("left", "--" + trackedPos.left);
-            Log.e("right", "--" + trackedPos.right);
-            Log.e("top", "--" + trackedPos.top);
-            Log.e("bottom", "--" + trackedPos.bottom);
+            Log.e("multi_box_left", "--" + trackedPos.left);
+            Log.e("multi_box_right", "--" + trackedPos.right);
+            Log.e("multi_box_top", "--" + trackedPos.top);
+            Log.e("multi_box_bottom", "--" + trackedPos.bottom);
             final String labelString =
                     !TextUtils.isEmpty(recognition.title)
                             ? String.format("%s %.2f", recognition.title, (100 * recognition.detectionConfidence))
                             : String.format("%.2f", (100 * recognition.detectionConfidence));
             //            borderedText.drawText(canvas, trackedPos.left + cornerSize, trackedPos.top,
             // labelString);
-//            borderedText.drawText(canvas, trackedPos.left + cornerSize, trackedPos.top, labelString + "%", boxPaint);
+            borderedText.drawText(canvas, trackedPos.left + cornerSize, trackedPos.top, labelString + "%", boxPaint);
         }
     }
 

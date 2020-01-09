@@ -16,8 +16,10 @@
 
 package org.tensorflow.lite.examples.detection;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
@@ -26,6 +28,7 @@ import android.graphics.Paint.Style;
 import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.media.ImageReader.OnImageAvailableListener;
+import android.os.Environment;
 import android.os.SystemClock;
 import android.util.Base64;
 import android.util.Log;
@@ -39,7 +42,11 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.gson.Gson;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -241,10 +248,10 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
 //                                canvas.drawCircle( location.bottom, location.left,5, paint);
 
 
+                                Log.e("face_corrdinates", Float.toString(location.left) + " " + Float.toString(location.right));
                                 location.left = 300 - location.left;
                                 location.right = 300 - location.right;
                                 cropToFrameTransform.mapRect(location);
-                                Log.e("location", "" + location.left);
                                 result.setLocation(location);
                                 mappedRecognitions.add(result);
 
@@ -261,6 +268,7 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
                                     int y2 = (int) location.bottom;
                                     int width = Math.abs(x2 - x1);
                                     int height = Math.abs(y2 - y1);
+                                    Log.e("width", Integer.toString(width) + " " + Integer.toString(height));
                                     Matrix matrix = new Matrix();
                                     matrix.postScale(1, -1, rgbFrameBitmap.getWidth() / 2, rgbFrameBitmap.getHeight() / 2);
                                     croppedBmp = Bitmap.createBitmap(rgbFrameBitmap, 0, 0, rgbFrameBitmap.getWidth(), rgbFrameBitmap.getHeight(), matrix, true);
@@ -400,7 +408,7 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
             }
         }
 
-        int minIndex = avg_bitmap.indexOf(Collections.max(avg_bitmap));
+        int minIndex = avg_bitmap.indexOf(Collections.min(avg_bitmap));
         Collections.sort(avg_bitmap);
         Log.e("final_bestavg", "--" + avg_bitmap.get(0));
         Log.e("avgminindex", "--" + minIndex);
@@ -432,10 +440,18 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
             SearchHeaderr searchHeaderr = new SearchHeaderr();
             searchHeaderr.setImage_encoded(base64String);
             searchHeaderr.setUser_id("5d0a8ef72ad9c04228140739");
+            File file = new File(DetectorActivity.this.getFilesDir(), "TFL");
+            if (!file.exists()) {
+                file.mkdir();
+            }
 
 
-            Log.e("search", new Gson().toJson(searchHeaderr));
 
+            byte[] decodedString = Base64.decode(base64String, Base64.DEFAULT);
+            Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+
+
+            generateNoteOnSD(DetectorActivity.this,System.currentTimeMillis()+".txt",base64String);
             apiService.getresult(searchHeaderr).enqueue(new Callback<FaceSearch>() {
                 @Override
                 public void onResponse(Call<FaceSearch> call, Response<FaceSearch> response) {
@@ -456,7 +472,6 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
                                 }
                                 SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
                                 Calendar calendar = Calendar.getInstance();
-                                String date = simpleDateFormat.format(calendar.getTimeInMillis());
                                 String image_url = APIServiceFactory.BASE_URL + user.getFileDirectory();
 
                                 facesBitmap.clear();
@@ -477,6 +492,7 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
                                 runOnUiThread(new Runnable() {
                                     @Override
                                     public void run() {
+
                                         recyclerView.setAdapter(imagePreviewAdapter);
                                     }
                                 });
@@ -486,6 +502,8 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
                                     break;
                                 }
                             }
+
+                            setCameraFragment();
 //                            updateRecyclerItems(id);
                         } else {
                             Toast.makeText(DetectorActivity.this, "" + response.body().getMessage(), Toast.LENGTH_SHORT).show();
@@ -511,4 +529,21 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
         }
     }
 
+
+    public void generateNoteOnSD(Context context, String sFileName, String sBody) {
+        try {
+            File root = new File(Environment.getExternalStorageDirectory(), "Notes");
+            if (!root.exists()) {
+                root.mkdirs();
+            }
+            File gpxfile = new File(root, sFileName);
+            FileWriter writer = new FileWriter(gpxfile);
+            writer.append(sBody);
+            writer.flush();
+            writer.close();
+            Toast.makeText(context, "Saved", Toast.LENGTH_SHORT).show();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }

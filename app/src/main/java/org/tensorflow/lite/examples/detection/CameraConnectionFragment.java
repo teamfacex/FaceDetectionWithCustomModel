@@ -257,6 +257,8 @@ public class CameraConnectionFragment extends Fragment {
                 }
             };
 
+    public RectF static_rectf;
+
     private CameraConnectionFragment(
             final ConnectionCallback connectionCallback,
             final OnImageAvailableListener imageListener,
@@ -359,38 +361,50 @@ public class CameraConnectionFragment extends Fragment {
         surfaceview = (SurfaceView) view.findViewById(R.id.surfaceView);
 
 
-//        SurfaceHolder mHolder = surfaceview.getHolder();
-//
-//
-//        mHolder.addCallback(new SurfaceHolder.Callback() {
-//            @Override
-//            public void surfaceCreated(SurfaceHolder surfaceHolder) {
-//
-//                Canvas canvas = surfaceHolder.lockCanvas();
-//                if (canvas == null) {
-//                    Log.e("TAG", "Cannot draw onto the canvas as it's null");
-//                } else {
-//                    Paint myPaint = new Paint();
-//                    myPaint.setColor(Color.rgb(100, 20, 50));
-//                    myPaint.setStrokeWidth(10);
-//                    myPaint.setStyle(Paint.Style.STROKE);
-//                    canvas.drawRect(100, 100, 700, 700, myPaint);
-//
-//                    surfaceHolder.unlockCanvasAndPost(canvas);
-//                }
-//
-//            }
-//
-//            @Override
-//            public void surfaceChanged(SurfaceHolder surfaceHolder, int i, int i1, int i2) {
-//
-//            }
-//
-//            @Override
-//            public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
-//
-//            }
-//        });
+        SurfaceHolder mHolder = surfaceview.getHolder();
+        surfaceview.setZOrderOnTop(true);    // necessary
+        mHolder.setFormat(PixelFormat.TRANSPARENT);
+
+        mHolder.addCallback(new SurfaceHolder.Callback() {
+            @Override
+            public void surfaceCreated(SurfaceHolder surfaceHolder) {
+
+                float left = (surfaceview.getWidth() - surfaceview.getWidth() * 0.7f) / 2;
+                float right = left + surfaceview.getWidth() * 0.7f;
+                float top = (surfaceview.getHeight() - surfaceview.getHeight() * 0.6f) / 3;
+                float bottom = top + surfaceview.getHeight() * 0.6f;
+                surfaceview.getHeight();
+                Log.e("width", Float.toString(surfaceview.getWidth() * 0.7f) + Float.toString(surfaceview.getHeight() * 0.6f));
+                Canvas canvas = surfaceHolder.lockCanvas();
+                static_rectf=new RectF(left,top,right,bottom);
+
+                Log.e("cordinates_left", "--" + left);
+                Log.e("cordinates_right", "--" + right);
+                Log.e("cordinates_top", "--" + top);
+                Log.e("cordinates_bottom", "--" + bottom);
+                if (canvas == null) {
+                    Log.e("TAG", "Cannot draw onto the canvas as it's null");
+                } else {
+                    Paint myPaint = new Paint();
+                    myPaint.setColor(Color.rgb(100, 20, 50));
+                    myPaint.setStrokeWidth(10);
+                    myPaint.setStyle(Paint.Style.STROKE);
+                    canvas.drawRect(left, top, right, bottom, myPaint);
+                    surfaceHolder.unlockCanvasAndPost(canvas);
+                }
+
+            }
+
+            @Override
+            public void surfaceChanged(SurfaceHolder surfaceHolder, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
+
+            }
+        });
     }
 
 
@@ -468,7 +482,7 @@ public class CameraConnectionFragment extends Fragment {
             throw new RuntimeException(getString(R.string.camera_error));
         }
 
-        cameraConnectionCallback.onPreviewSizeChosen(previewSize, sensorOrientation);
+        cameraConnectionCallback.onPreviewSizeChosen(previewSize, sensorOrientation,static_rectf);
     }
 
     /**
@@ -626,6 +640,14 @@ public class CameraConnectionFragment extends Fragment {
         }
     }
 
+    /**
+     * Configures the necessary {@link Matrix} transformation to `mTextureView`. This method should be
+     * called after the camera preview size is determined in setUpCameraOutputs and also the size of
+     * `mTextureView` is fixed.
+     *
+     * @param viewWidth  The width of `mTextureView`
+     * @param viewHeight The height of `mTextureView`
+     */
     private void configureTransform(final int viewWidth, final int viewHeight) {
         final Activity activity = getActivity();
         if (null == textureView || null == previewSize || null == activity) {
@@ -654,10 +676,12 @@ public class CameraConnectionFragment extends Fragment {
      * known.
      */
     public interface ConnectionCallback {
-        void onPreviewSizeChosen(Size size, int cameraRotation);
+        void onPreviewSizeChosen(Size size, int cameraRotation,RectF recf);
     }
 
-
+    /**
+     * Compares two {@code Size}s based on their areas.
+     */
     static class CompareSizesByArea implements Comparator<Size> {
         @Override
         public int compare(final Size lhs, final Size rhs) {
@@ -667,7 +691,9 @@ public class CameraConnectionFragment extends Fragment {
         }
     }
 
-
+    /**
+     * Shows an error message dialog.
+     */
     public static class ErrorDialog extends DialogFragment {
         private static final String ARG_MESSAGE = "message";
 

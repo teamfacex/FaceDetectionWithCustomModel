@@ -24,6 +24,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.RectF;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.RectShape;
 import android.hardware.Camera;
@@ -87,6 +88,8 @@ public abstract class CameraActivity extends AppCompatActivity
     private static final String PERMISSION_CAMERA = Manifest.permission.CAMERA;
     protected int previewWidth = 0;
     protected int previewHeight = 0;
+
+    protected RectF boundingRectf;
     private boolean debug = false;
     private Handler handler;
     private HandlerThread handlerThread;
@@ -536,9 +539,10 @@ public abstract class CameraActivity extends AppCompatActivity
         if (useCamera2API) {
             CameraConnectionFragment camera2Fragment = CameraConnectionFragment.newInstance(new CameraConnectionFragment.ConnectionCallback() {
                                                                                                 @Override
-                                                                                                public void onPreviewSizeChosen(final Size size, final int rotation) {
+                                                                                                public void onPreviewSizeChosen(final Size size, final int rotation, final RectF recf) {
                                                                                                     previewHeight = size.getHeight();
                                                                                                     previewWidth = size.getWidth();
+                                                                                                    boundingRectf = recf;
                                                                                                     CameraActivity.this.onPreviewSizeChosen(size, 270);
 
                                                                                                     Log.e("270", "--" + rotation);
