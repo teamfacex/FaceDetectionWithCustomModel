@@ -18,8 +18,6 @@
     android:layout_height="match_parent">
 
 
-
-
     <org.tensorflow.lite.examples.detection.customview.AutoFitTextureView
         android:id="@+id/texture"
         android:layout_width="wrap_content"
@@ -28,15 +26,15 @@
     <org.tensorflow.lite.examples.detection.customview.OverlayView
         android:id="@+id/tracking_overlay"
         android:layout_width="match_parent"
-        android:visibility="visible"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        android:visibility="visible" />
 
     <SurfaceView
         android:id="@+id/surfaceView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_gravity="center" />
-
+        android:layout_gravity="center"
+        android:visibility="gone" />
 
 
 </FrameLayout>

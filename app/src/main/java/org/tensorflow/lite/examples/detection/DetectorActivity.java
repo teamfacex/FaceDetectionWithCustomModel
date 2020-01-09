@@ -27,6 +27,7 @@ import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.media.ImageReader.OnImageAvailableListener;
 import android.os.SystemClock;
+import android.util.Base64;
 import android.util.Log;
 import android.util.Size;
 import android.util.TypedValue;
@@ -35,19 +36,43 @@ import android.widget.Toast;
 
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.gson.Gson;
+
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.opencv.android.Utils;
+import org.opencv.core.Mat;
+import org.opencv.imgproc.Imgproc;
+import org.tensorflow.lite.examples.detection.ServiceApi.APIServiceFactory;
+import org.tensorflow.lite.examples.detection.ServiceApi.ApiService;
 import org.tensorflow.lite.examples.detection.customview.OverlayView;
 import org.tensorflow.lite.examples.detection.customview.OverlayView.DrawCallback;
 import org.tensorflow.lite.examples.detection.env.BorderedText;
 import org.tensorflow.lite.examples.detection.env.ImageUtils;
 import org.tensorflow.lite.examples.detection.env.Logger;
+import org.tensorflow.lite.examples.detection.model.FaceSearch;
+import org.tensorflow.lite.examples.detection.model.LoginApi.User;
+import org.tensorflow.lite.examples.detection.model.SearchHeaderr;
 import org.tensorflow.lite.examples.detection.tflite.Classifier;
 import org.tensorflow.lite.examples.detection.tflite.TFLiteObjectDetectionAPIModel;
 import org.tensorflow.lite.examples.detection.tracking.MultiBoxTracker;
+import org.tensorflow.lite.examples.detection.tracking.Svd;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
+import static android.view.View.GONE;
 
 /**
  * An activity that uses a TensorFlowMultiBoxDetector and ObjectTracker to detect and then track
@@ -73,13 +98,18 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
 
     private Classifier detector;
 
+
+    BitmapImageAdapter bitmapImageAdapter;
+
+    ApiService apiService;
+
     private long lastProcessingTimeMs;
     private Bitmap rgbFrameBitmap = null;
     private Bitmap croppedBitmap = null;
     private Bitmap cropCopyBitmap = null;
 
     private boolean computingDetection = false;
-
+    private ArrayList<Bitmap> facesBitmap;
     private long timestamp = 0;
 
     private Matrix frameToCropTransform;
@@ -100,6 +130,11 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
         final float textSizePx = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, TEXT_SIZE_DIP, getResources().getDisplayMetrics());
         borderedText = new BorderedText(textSizePx);
         borderedText.setTypeface(Typeface.MONOSPACE);
+
+
+        apiService = APIServiceFactory.getRetrofit().create(ApiService.class);
+
+        facesBitmap = new ArrayList<>();
 
         tracker = new MultiBoxTracker(this);
 
@@ -219,11 +254,6 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
 
                                 try {
 
-//                                    Log.e("location_left", "--" + rgbFrameBitmap.getWidth() + "/" + rgbFrameBitmap.getHeight());
-//                                    Log.e("location_left", "--" + location.left);
-//                                    Log.e("location_right", "--" + location.right);
-//                                    Log.e("location_top", "--" + location.top);
-//                                    Log.e("location_bottom", "--" + location.bottom);
 
                                     int x1 = (int) location.left;
                                     int y1 = (int) location.top;
@@ -233,7 +263,7 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
                                     int height = Math.abs(y2 - y1);
                                     Matrix matrix = new Matrix();
                                     matrix.postScale(1, -1, rgbFrameBitmap.getWidth() / 2, rgbFrameBitmap.getHeight() / 2);
-                                    croppedBmp = Bitmap.createBitmap(rgbFrameBitmap,  0, 0, rgbFrameBitmap.getWidth(), rgbFrameBitmap.getHeight(), matrix, true);
+                                    croppedBmp = Bitmap.createBitmap(rgbFrameBitmap, 0, 0, rgbFrameBitmap.getWidth(), rgbFrameBitmap.getHeight(), matrix, true);
                                     croppedBmp = Bitmap.createBitmap(croppedBmp, x1, y1, width, height);
                                     Matrix matrix1 = new Matrix();
                                     matrix1.postRotate(270);
@@ -245,43 +275,35 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
 
                                 } catch (Exception e) {
 
-                                    bimap.clear();
 
                                     Log.e("exce", e.getMessage());
                                 }
 
                                 if (mappedRecognitions.size() > 0 && croppedBmp != null) {
 
-                                    if (bimap.size() > 15) {
-                                        bimap.clear();
+                                    facesBitmap.add(croppedBmp);
+
+                                    bitmapImageAdapter = new BitmapImageAdapter(DetectorActivity.this, facesBitmap);
+
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            recyclerView.setAdapter(bitmapImageAdapter);
+                                        }
+                                    });
+
+                                    if (facesBitmap.size() == 10) {
+
+                                        setBlankFragment();
+                                        getBestImage();
                                     }
-                                    bimap.add(croppedBmp);
-                                } else if (mappedRecognitions.size() == 0) {
-                                    bimap.clear();
                                 }
 
 
-                                imagePreviewAdapter = new ImagePreviewAdapter(DetectorActivity.this, bimap, new ImagePreviewAdapter.ViewHolder.OnItemClickListener() {
-                                    @Override
-                                    public void onClick(View v, int position) {
-
-                                    }
-                                });
-
-
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        recyclerView.setAdapter(imagePreviewAdapter);
-                                    }
-                                });
                             }
                         }
 
 
-                        if (mappedRecognitions.size() > 1) {
-                            Log.e("mappedRecognitions", "--" + mappedRecognitions.size());
-                        }
                         tracker.trackResults(mappedRecognitions, currTimestamp);
                         trackingOverlay.postInvalidate();
 
@@ -327,4 +349,166 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
     protected void setNumThreads(final int numThreads) {
         runInBackground(() -> detector.setNumThreads(numThreads));
     }
+
+
+    private void getBestImage() {
+        List<Double> avg_bitmap = new ArrayList<>();
+
+        Log.e("facesBitmap", "" + facesBitmap.size());
+
+        for (int k = 0; k < facesBitmap.size(); k++) {
+            try {
+                Mat src = new Mat();
+                Utils.bitmapToMat(facesBitmap.get(k), src);
+                Imgproc.cvtColor(src, src, Imgproc.COLOR_BGR2GRAY);
+                byte[] return_buff = new byte[(int) (src.total() * src.channels())];
+                src.get(0, 0, return_buff);
+                Mat resizeimage = new Mat();
+                org.opencv.core.Size sz = new org.opencv.core.Size(32, 32);
+                Imgproc.resize(src, resizeimage, sz);
+
+                double[][] mat_double = new double[resizeimage.width()][resizeimage.height()];
+
+                for (int i1 = 0; i1 < resizeimage.height(); i1++) {
+
+                    for (int j = 0; j < resizeimage.width(); j++) {
+                        String s = Arrays.toString(resizeimage.get(i1, j));
+                        s = s.replaceAll("[^\\w\\s]", "");
+                        mat_double[i1][j] = Double.parseDouble(s);
+                    }
+                }
+
+                List<double[]> doubles = Svd.getSvd(mat_double);
+
+
+                double first_ten = 0;
+                double total_sum = 0;
+                for (double[] data : doubles) {
+
+                    for (int i2 = 0; i2 < 10; i2++) {
+                        first_ten = first_ten + data[i2];
+                    }
+
+                    for (int i3 = 0; i3 < data.length; i3++) {
+                        total_sum = total_sum + data[i3];
+                    }
+                }
+                avg_bitmap.add(first_ten / total_sum);
+                Log.e("avg", "--" + first_ten / total_sum);
+            } catch (Exception e) {
+                Log.e("best_exception", e.getMessage());
+            }
+        }
+
+        int minIndex = avg_bitmap.indexOf(Collections.max(avg_bitmap));
+        Collections.sort(avg_bitmap);
+        Log.e("final_bestavg", "--" + avg_bitmap.get(0));
+        Log.e("avgminindex", "--" + minIndex);
+
+        Bitmap faceCroped = facesBitmap.get(minIndex);
+        if (faceCroped != null) {
+
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    getFaceresult(getBase64String(faceCroped));
+                }
+            });
+        }
+    }
+
+
+    private String getBase64String(Bitmap bitmap) {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+        byte[] imageBytes = baos.toByteArray();
+        return Base64.encodeToString(imageBytes, Base64.NO_WRAP);
+    }
+
+
+    private void getFaceresult(String base64String) {
+        try {
+
+            SearchHeaderr searchHeaderr = new SearchHeaderr();
+            searchHeaderr.setImage_encoded(base64String);
+            searchHeaderr.setUser_id("5d0a8ef72ad9c04228140739");
+
+
+            Log.e("search", new Gson().toJson(searchHeaderr));
+
+            apiService.getresult(searchHeaderr).enqueue(new Callback<FaceSearch>() {
+                @Override
+                public void onResponse(Call<FaceSearch> call, Response<FaceSearch> response) {
+                    if (response.raw().code() == 200 && response.body().getStatus().equalsIgnoreCase("ok")) {
+
+                        List<org.tensorflow.lite.examples.detection.model.User> users = response.body().getData().getUser();
+                        if (users.size() > 0) {
+                            String id = null;
+                            for (org.tensorflow.lite.examples.detection.model.User user : users) {
+                                id = user.getId();
+                                Log.e("user", new Gson().toJson(user));
+                                String jsonResponse = new Gson().toJson(user);
+                                JSONObject jsonObject = null;
+                                try {
+                                    jsonObject = new JSONObject(jsonResponse);
+                                } catch (JSONException e) {
+                                    e.printStackTrace();
+                                }
+                                SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+                                Calendar calendar = Calendar.getInstance();
+                                String date = simpleDateFormat.format(calendar.getTimeInMillis());
+                                String image_url = APIServiceFactory.BASE_URL + user.getFileDirectory();
+
+                                facesBitmap.clear();
+
+
+                                List<String> imageUrl = new ArrayList<>();
+
+                                imageUrl.add(image_url);
+
+                                imagePreviewAdapter = new ImagePreviewAdapter(DetectorActivity.this, imageUrl, new ImagePreviewAdapter.ViewHolder.OnItemClickListener() {
+                                    @Override
+                                    public void onClick(View v, int position) {
+
+                                    }
+                                });
+
+
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        recyclerView.setAdapter(imagePreviewAdapter);
+                                    }
+                                });
+                                if (jsonObject.has("person_name")) {
+
+
+                                    break;
+                                }
+                            }
+//                            updateRecyclerItems(id);
+                        } else {
+                            Toast.makeText(DetectorActivity.this, "" + response.body().getMessage(), Toast.LENGTH_SHORT).show();
+                        }
+                    } else {
+//                        add_user.setVisibility(View.VISIBLE);
+//                        sendDetails(createfile(capturebitmap));
+
+                        Toast.makeText(DetectorActivity.this, "" + response.body().getMessage(), Toast.LENGTH_SHORT).show();
+
+                        setCameraFragment();
+
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<FaceSearch> call, Throwable t) {
+                    Log.e("onFailure", t.getMessage());
+                }
+            });
+        } catch (Exception e) {
+            Log.e("Exception", e.getMessage());
+        }
+    }
+
 }

@@ -45,4 +45,11 @@ dependencies {
     implementation 'androidx.coordinatorlayout:coordinatorlayout:1.0.0'
     implementation 'com.google.android.material:material:1.0.0'
     implementation 'org.tensorflow:tensorflow-lite:0.0.0-nightly'
+    implementation 'com.squareup.retrofit2:converter-scalars:2.3.0'
+    implementation 'com.squareup.retrofit2:retrofit:2.1.0'
+    implementation 'com.github.bumptech.glide:glide:3.7.0'
+
+    implementation 'com.squareup.retrofit2:converter-gson:2.1.0'
+    implementation group: 'org.ejml', name: 'all', version: '0.28'
+    implementation project(path: ':openCVLibrary343')
 }

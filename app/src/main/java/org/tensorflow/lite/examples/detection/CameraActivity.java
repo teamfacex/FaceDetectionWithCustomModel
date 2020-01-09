@@ -18,8 +18,11 @@ package org.tensorflow.lite.examples.detection;
 
 import android.Manifest;
 import android.app.Fragment;
+import android.app.FragmentTransaction;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.RectShape;
@@ -52,6 +55,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.WindowManager;
@@ -64,6 +69,9 @@ import android.widget.Toast;
 
 import java.nio.ByteBuffer;
 
+import org.opencv.android.BaseLoaderCallback;
+import org.opencv.android.LoaderCallbackInterface;
+import org.opencv.android.OpenCVLoader;
 import org.tensorflow.lite.examples.detection.env.ImageUtils;
 import org.tensorflow.lite.examples.detection.env.Logger;
 
@@ -90,6 +98,8 @@ public abstract class CameraActivity extends AppCompatActivity
     private Runnable postInferenceCallback;
     private Runnable imageConverter;
 
+    public static final String TAG = CameraActivity.class.getSimpleName();
+
     private LinearLayout bottomSheetLayout;
     private LinearLayout gestureLayout;
     private BottomSheetBehavior sheetBehavior;
@@ -102,6 +112,11 @@ public abstract class CameraActivity extends AppCompatActivity
     FrameLayout frameLayout;
     public RecyclerView recyclerView;
 
+    static {
+        OpenCVLoader.initDebug();
+    }
+
+
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         LOGGER.d("onCreate " + this);
@@ -113,6 +128,43 @@ public abstract class CameraActivity extends AppCompatActivity
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayShowTitleEnabled(false);
 
+
+//        SurfaceView surfaceview = (SurfaceView) findViewById(R.id.surfaceView);
+//
+//
+//        SurfaceHolder mHolder = surfaceview.getHolder();
+//
+//
+//        mHolder.addCallback(new SurfaceHolder.Callback() {
+//            @Override
+//            public void surfaceCreated(SurfaceHolder surfaceHolder) {
+//
+//                Canvas canvas = surfaceHolder.lockCanvas();
+//                if (canvas == null) {
+//                    Log.e("TAG", "Cannot draw onto the canvas as it's null");
+//                } else {
+//                    Paint myPaint = new Paint();
+//                    myPaint.setColor(Color.rgb(100, 20, 50));
+//                    myPaint.setStrokeWidth(10);
+//                    myPaint.setStyle(Paint.Style.STROKE);
+//                    canvas.drawRect(100, 100, 700, 700, myPaint);
+//
+//                    surfaceHolder.unlockCanvasAndPost(canvas);
+//                }
+//
+//            }
+//
+//            @Override
+//            public void surfaceChanged(SurfaceHolder surfaceHolder, int i, int i1, int i2) {
+//
+//            }
+//
+//            @Override
+//            public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
+//
+//            }
+//        });
+
         frameLayout = findViewById(R.id.container);
 
 
@@ -122,7 +174,7 @@ public abstract class CameraActivity extends AppCompatActivity
 
         recyclerView.setHasFixedSize(true);
         if (hasPermission()) {
-            setFragment();
+            setCameraFragment();
         } else {
             requestPermission();
         }
@@ -332,7 +384,32 @@ public abstract class CameraActivity extends AppCompatActivity
         handlerThread = new HandlerThread("inference");
         handlerThread.start();
         handler = new Handler(handlerThread.getLooper());
+
+        if (!OpenCVLoader.initDebug()) {
+            Log.e(TAG, "Internal OpenCV library not found. Using OpenCV Manager for initialization");
+            OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION, this, mLoaderCallBack);
+        } else {
+            Log.e(TAG, "OpenCV library found inside package. Using it!");
+            mLoaderCallBack.onManagerConnected(LoaderCallbackInterface.SUCCESS);
+        }
     }
+
+
+    private BaseLoaderCallback mLoaderCallBack = new BaseLoaderCallback(this) {
+        @Override
+        public void onManagerConnected(int status) {
+
+            Log.e("status", "--" + status);
+            if (status == LoaderCallbackInterface.SUCCESS) {
+
+
+            } else {
+                super.onManagerConnected(status);
+            }
+
+        }
+    };
+
 
     @Override
     public synchronized void onPause() {
@@ -375,7 +452,7 @@ public abstract class CameraActivity extends AppCompatActivity
             if (grantResults.length > 0
                     && grantResults[0] == PackageManager.PERMISSION_GRANTED
                     && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
-                setFragment();
+                setCameraFragment();
             } else {
                 requestPermission();
             }
@@ -450,7 +527,7 @@ public abstract class CameraActivity extends AppCompatActivity
         return null;
     }
 
-    protected void setFragment() {
+    public void setCameraFragment() {
         String cameraId = chooseCamera();
 
         Log.e("cameraid", "" + cameraId);
@@ -478,6 +555,15 @@ public abstract class CameraActivity extends AppCompatActivity
         }
 
         getFragmentManager().beginTransaction().replace(R.id.container, fragment).commit();
+    }
+
+
+    public void setBlankFragment() {
+
+        DummyFragment dummyFragment = new DummyFragment();
+
+        getFragmentManager().beginTransaction().replace(R.id.container, dummyFragment).commit();
+
     }
 
     protected void fillBytes(final Plane[] planes, final byte[][] yuvBytes) {
