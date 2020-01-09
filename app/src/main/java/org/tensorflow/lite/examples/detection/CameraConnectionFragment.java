@@ -360,12 +360,20 @@ public class CameraConnectionFragment extends Fragment {
 
 
         SurfaceHolder mHolder = surfaceview.getHolder();
-
+        surfaceview.setZOrderOnTop(true);    // necessary
+        SurfaceHolder sfhTrackHolder = surfaceview.getHolder();
+        sfhTrackHolder.setFormat(PixelFormat.TRANSPARENT);
 
         mHolder.addCallback(new SurfaceHolder.Callback() {
             @Override
             public void surfaceCreated(SurfaceHolder surfaceHolder) {
 
+                float left = (surfaceview.getWidth()-surfaceview.getWidth()*0.7f)/2;
+                float right = left+surfaceview.getWidth()*0.7f;
+                float top = (surfaceview.getHeight()-surfaceview.getHeight()*0.6f)/2;
+                float bottom = top+surfaceview.getHeight()*0.6f;
+                surfaceview.getHeight();
+                Log.e("width",Float.toString(surfaceview.getWidth()*0.7f)+Float.toString(surfaceview.getHeight()*0.6f));
                 Canvas canvas = surfaceHolder.lockCanvas();
                 if (canvas == null) {
                     Log.e("TAG", "Cannot draw onto the canvas as it's null");
@@ -374,8 +382,7 @@ public class CameraConnectionFragment extends Fragment {
                     myPaint.setColor(Color.rgb(100, 20, 50));
                     myPaint.setStrokeWidth(10);
                     myPaint.setStyle(Paint.Style.STROKE);
-                    canvas.drawRect(100, 100, 700, 700, myPaint);
-
+                    canvas.drawRect(left, top, right, bottom, myPaint);
                     surfaceHolder.unlockCanvasAndPost(canvas);
                 }
 

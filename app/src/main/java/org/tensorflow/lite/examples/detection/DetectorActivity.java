@@ -204,8 +204,7 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
                             final RectF location = result.getLocation();
                             if (location != null && result.getConfidence() >= minimumConfidence) {
 //                                canvas.drawCircle( location.bottom, location.left,5, paint);
-
-
+                                Log.e("left",Float.toString(location.left)+" "+Float.toString(location.right));
                                 location.left = 300 - location.left;
                                 location.right = 300 - location.right;
                                 cropToFrameTransform.mapRect(location);
@@ -231,6 +230,7 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
                                     int y2 = (int) location.bottom;
                                     int width = Math.abs(x2 - x1);
                                     int height = Math.abs(y2 - y1);
+                                    Log.e("width",Integer.toString(width)+" "+Integer.toString(height));
                                     Matrix matrix = new Matrix();
                                     matrix.postScale(1, -1, rgbFrameBitmap.getWidth() / 2, rgbFrameBitmap.getHeight() / 2);
                                     croppedBmp = Bitmap.createBitmap(rgbFrameBitmap,  0, 0, rgbFrameBitmap.getWidth(), rgbFrameBitmap.getHeight(), matrix, true);

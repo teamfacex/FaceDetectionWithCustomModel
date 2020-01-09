@@ -1,6 +1,6 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
- * Original file: F:\\InbloomAndroid\\Downloads\\examples-master\\lite\\examples\\object_detection\\android\\openCVLibrary343\\src\\main\\aidl\\org\\opencv\\engine\\OpenCVEngineInterface.aidl
+ * Original file: /media/storage/Dev/real-stuff/FaceDetectionWithCustomModel/openCVLibrary343/src/main/aidl/org/opencv/engine/OpenCVEngineInterface.aidl
  */
 package org.opencv.engine;
 /**
