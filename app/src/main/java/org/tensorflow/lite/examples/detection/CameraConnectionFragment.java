@@ -257,6 +257,9 @@ public class CameraConnectionFragment extends Fragment {
                 }
             };
 
+    public RectF static_rectf;
+    public int width;
+    public int height;
     private CameraConnectionFragment(
             final ConnectionCallback connectionCallback,
             final OnImageAvailableListener imageListener,
@@ -367,14 +370,21 @@ public class CameraConnectionFragment extends Fragment {
         mHolder.addCallback(new SurfaceHolder.Callback() {
             @Override
             public void surfaceCreated(SurfaceHolder surfaceHolder) {
-
-                float left = (surfaceview.getWidth()-surfaceview.getWidth()*0.7f)/2;
-                float right = left+surfaceview.getWidth()*0.7f;
-                float top = (surfaceview.getHeight()-surfaceview.getHeight()*0.6f)/2;
-                float bottom = top+surfaceview.getHeight()*0.6f;
+                width=surfaceview.getWidth();
+                height=surfaceview.getHeight();
+                float left = (surfaceview.getWidth() - surfaceview.getWidth() * 0.7f) / 2;
+                float right = left + surfaceview.getWidth() * 0.7f;
+                float top = (surfaceview.getHeight() - surfaceview.getHeight() * 0.6f) / 3;
+                float bottom = top + surfaceview.getHeight() * 0.6f;
                 surfaceview.getHeight();
-                Log.e("width",Float.toString(surfaceview.getWidth()*0.7f)+Float.toString(surfaceview.getHeight()*0.6f));
+                Log.e("width", Float.toString(surfaceview.getWidth() * 0.7f) + Float.toString(surfaceview.getHeight() * 0.6f));
                 Canvas canvas = surfaceHolder.lockCanvas();
+                static_rectf=new RectF(left,top,right,bottom);
+
+                Log.e("cordinates_left", "--" + left);
+                Log.e("cordinates_right", "--" + right);
+                Log.e("cordinates_top", "--" + top);
+                Log.e("cordinates_bottom", "--" + bottom);
                 if (canvas == null) {
                     Log.e("TAG", "Cannot draw onto the canvas as it's null");
                 } else {
@@ -476,7 +486,7 @@ public class CameraConnectionFragment extends Fragment {
                 throw new RuntimeException(getString(R.string.camera_error));
             }
 
-            cameraConnectionCallback.onPreviewSizeChosen(previewSize, sensorOrientation);
+            cameraConnectionCallback.onPreviewSizeChosen(previewSize, sensorOrientation, static_rectf,width,height);
         }
 
         /**
@@ -670,7 +680,7 @@ public class CameraConnectionFragment extends Fragment {
          * known.
          */
         public interface ConnectionCallback {
-            void onPreviewSizeChosen(Size size, int cameraRotation);
+            void onPreviewSizeChosen(Size size, int cameraRotation, RectF rectf, int width, int height);
         }
 
         /**

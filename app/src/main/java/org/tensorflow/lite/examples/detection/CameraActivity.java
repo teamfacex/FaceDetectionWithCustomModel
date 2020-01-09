@@ -21,6 +21,7 @@ import android.app.Fragment;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Paint;
+import android.graphics.RectF;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.RectShape;
 import android.hardware.Camera;
@@ -79,6 +80,9 @@ public abstract class CameraActivity extends AppCompatActivity
     private static final String PERMISSION_CAMERA = Manifest.permission.CAMERA;
     protected int previewWidth = 0;
     protected int previewHeight = 0;
+    protected RectF boundingRectf;
+    protected int widthSurface;
+    protected int heightSurface;
     private boolean debug = false;
     private Handler handler;
     private HandlerThread handlerThread;
@@ -222,7 +226,7 @@ public abstract class CameraActivity extends AppCompatActivity
                 previewHeight = previewSize.height;
                 previewWidth = previewSize.width;
                 rgbBytes = new int[previewWidth * previewHeight];
-                onPreviewSizeChosen(new Size(previewSize.width, previewSize.height), 270);
+                onPreviewSizeChosen(new Size(previewSize.width, previewSize.height), 270,boundingRectf,widthSurface,heightSurface);
             }
         } catch (final Exception e) {
             LOGGER.e(e, "Exception!");
@@ -249,6 +253,10 @@ public abstract class CameraActivity extends AppCompatActivity
                         isProcessingFrame = false;
                     }
                 };
+
+
+
+
         processImage();
     }
 
@@ -459,10 +467,13 @@ public abstract class CameraActivity extends AppCompatActivity
         if (useCamera2API) {
             CameraConnectionFragment camera2Fragment = CameraConnectionFragment.newInstance(new CameraConnectionFragment.ConnectionCallback() {
                                                                                                 @Override
-                                                                                                public void onPreviewSizeChosen(final Size size, final int rotation) {
+                                                                                                public void onPreviewSizeChosen(final Size size, final int rotation, final RectF rectF,final int width, final int height) {
                                                                                                     previewHeight = size.getHeight();
                                                                                                     previewWidth = size.getWidth();
-                                                                                                    CameraActivity.this.onPreviewSizeChosen(size, 270);
+                                                                                                    boundingRectf = rectF;
+                                                                                                    widthSurface =width;
+                                                                                                    heightSurface = height;
+                                                                                                    CameraActivity.this.onPreviewSizeChosen(size, 270,rectF,width,height);
 
                                                                                                     Log.e("270", "--" + rotation);
                                                                                                 }
@@ -474,7 +485,22 @@ public abstract class CameraActivity extends AppCompatActivity
             camera2Fragment.setCamera(cameraId);
             fragment = camera2Fragment;
         } else {
-            fragment = new LegacyCameraConnectionFragment(this, getLayoutId(), getDesiredPreviewFrameSize());
+            LegacyCameraConnectionFragment legacyCameraConnectionFragment = LegacyCameraConnectionFragment.newInstance(new LegacyCameraConnectionFragment.ConnectionCallback() {
+                @Override
+                public void onPreviewSizeChosen(final Size size, final int rotation, final RectF rectF,final int width, final int height) {
+                    previewHeight = size.getHeight();
+                    previewWidth = size.getWidth();
+                    boundingRectf = rectF;
+                    widthSurface =width;
+                    heightSurface = height;
+                    CameraActivity.this.onPreviewSizeChosen(size, 270,rectF,width,height);
+
+                    Log.e("270", "--" + rotation);
+                }
+            },this, getLayoutId(), getDesiredPreviewFrameSize());
+//            fragment = new LegacyCameraConnectionFragment(this, getLayoutId(), getDesiredPreviewFrameSize());
+            fragment = legacyCameraConnectionFragment;
+
         }
 
         getFragmentManager().beginTransaction().replace(R.id.container, fragment).commit();
@@ -558,7 +584,7 @@ public abstract class CameraActivity extends AppCompatActivity
 
     protected abstract void processImage();
 
-    protected abstract void onPreviewSizeChosen(final Size size, final int rotation);
+    protected abstract void onPreviewSizeChosen(final Size size, final int rotation, final RectF rectf,final int width, final int height);
 
     protected abstract int getLayoutId();
 

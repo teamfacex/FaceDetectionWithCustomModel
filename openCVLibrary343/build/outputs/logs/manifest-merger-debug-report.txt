@@ -1,5 +1,6 @@
 -- Merging decision tree log ---
 manifest
+<<<<<<< Updated upstream
 ADDED from /media/storage/Dev/real-stuff/FaceDetectionWithCustomModel/openCVLibrary343/src/main/AndroidManifest.xml:2:1-8:12
 INJECTED from /media/storage/Dev/real-stuff/FaceDetectionWithCustomModel/openCVLibrary343/src/main/AndroidManifest.xml:2:1-8:12
 INJECTED from /media/storage/Dev/real-stuff/FaceDetectionWithCustomModel/openCVLibrary343/src/main/AndroidManifest.xml:2:1-8:12
@@ -35,3 +36,40 @@ INJECTED from /media/storage/Dev/real-stuff/FaceDetectionWithCustomModel/openCVL
 		INJECTED from /media/storage/Dev/real-stuff/FaceDetectionWithCustomModel/openCVLibrary343/src/main/AndroidManifest.xml
 		ADDED from /media/storage/Dev/real-stuff/FaceDetectionWithCustomModel/openCVLibrary343/src/main/AndroidManifest.xml:7:5-47
 		INJECTED from /media/storage/Dev/real-stuff/FaceDetectionWithCustomModel/openCVLibrary343/src/main/AndroidManifest.xml
+=======
+ADDED from /home/atul/tflite/openCVLibrary343/src/main/AndroidManifest.xml:2:1-8:12
+INJECTED from /home/atul/tflite/openCVLibrary343/src/main/AndroidManifest.xml:2:1-8:12
+INJECTED from /home/atul/tflite/openCVLibrary343/src/main/AndroidManifest.xml:2:1-8:12
+INJECTED from /home/atul/tflite/openCVLibrary343/src/main/AndroidManifest.xml:2:1-8:12
+INJECTED from /home/atul/tflite/openCVLibrary343/src/main/AndroidManifest.xml:2:1-8:12
+INJECTED from /home/atul/tflite/openCVLibrary343/src/main/AndroidManifest.xml:2:1-8:12
+INJECTED from /home/atul/tflite/openCVLibrary343/src/main/AndroidManifest.xml:2:1-8:12
+	package
+		ADDED from /home/atul/tflite/openCVLibrary343/src/main/AndroidManifest.xml:3:7-27
+		INJECTED from /home/atul/tflite/openCVLibrary343/src/main/AndroidManifest.xml
+		INJECTED from /home/atul/tflite/openCVLibrary343/src/main/AndroidManifest.xml
+	android:versionName
+		ADDED from /home/atul/tflite/openCVLibrary343/src/main/AndroidManifest.xml:5:7-34
+		INJECTED from /home/atul/tflite/openCVLibrary343/src/main/AndroidManifest.xml
+		INJECTED from /home/atul/tflite/openCVLibrary343/src/main/AndroidManifest.xml
+	xmlns:android
+		ADDED from /home/atul/tflite/openCVLibrary343/src/main/AndroidManifest.xml:2:11-69
+	android:versionCode
+		ADDED from /home/atul/tflite/openCVLibrary343/src/main/AndroidManifest.xml:4:7-33
+		INJECTED from /home/atul/tflite/openCVLibrary343/src/main/AndroidManifest.xml
+		INJECTED from /home/atul/tflite/openCVLibrary343/src/main/AndroidManifest.xml
+uses-sdk
+ADDED from /home/atul/tflite/openCVLibrary343/src/main/AndroidManifest.xml:7:5-47
+INJECTED from /home/atul/tflite/openCVLibrary343/src/main/AndroidManifest.xml:7:5-47
+INJECTED from /home/atul/tflite/openCVLibrary343/src/main/AndroidManifest.xml:7:5-47
+INJECTED from /home/atul/tflite/openCVLibrary343/src/main/AndroidManifest.xml:7:5-47
+INJECTED from /home/atul/tflite/openCVLibrary343/src/main/AndroidManifest.xml:7:5-47
+	android:targetSdkVersion
+		ADDED from /home/atul/tflite/openCVLibrary343/src/main/AndroidManifest.xml:7:15-44
+		INJECTED from /home/atul/tflite/openCVLibrary343/src/main/AndroidManifest.xml
+		INJECTED from /home/atul/tflite/openCVLibrary343/src/main/AndroidManifest.xml
+	android:minSdkVersion
+		INJECTED from /home/atul/tflite/openCVLibrary343/src/main/AndroidManifest.xml
+		ADDED from /home/atul/tflite/openCVLibrary343/src/main/AndroidManifest.xml:7:5-47
+		INJECTED from /home/atul/tflite/openCVLibrary343/src/main/AndroidManifest.xml
+>>>>>>> Stashed changes

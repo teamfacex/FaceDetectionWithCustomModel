@@ -88,19 +88,24 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
     private MultiBoxTracker tracker;
 
     private BorderedText borderedText;
-
+    private RectF boundRect;
 
     ImagePreviewAdapter imagePreviewAdapter;
 
 
     ArrayList<Bitmap> bimap = new ArrayList<>();
+    private Matrix frameToDisplayMatrix;
+    private  int widthofSurfaceView;
+    private  int heightofSurfaceView;
 
     @Override
-    public void onPreviewSizeChosen(final Size size, final int rotation) {
+    public void onPreviewSizeChosen(final Size size, final int rotation, final RectF rectf, final int width, final int height) {
         final float textSizePx = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, TEXT_SIZE_DIP, getResources().getDisplayMetrics());
         borderedText = new BorderedText(textSizePx);
         borderedText.setTypeface(Typeface.MONOSPACE);
-
+        boundRect = rectf;
+        widthofSurfaceView=width;
+        heightofSurfaceView=height;
         tracker = new MultiBoxTracker(this);
 
         int cropSize = TF_OD_API_INPUT_SIZE;
@@ -210,7 +215,42 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
                                 cropToFrameTransform.mapRect(location);
                                 Log.e("location", "" + location.left);
                                 result.setLocation(location);
+                                int frameWidth=(int)previewWidth;
+                                int  frameHeight=(int)previewHeight;
+                                final boolean rotated = sensorOrientation % 180 == 90;
+                                final float multiplier =
+                                        Math.min(
+
+                                                (float) heightofSurfaceView/ (float) (rotated ? frameWidth : frameHeight),
+                                                (float) widthofSurfaceView / (float) (rotated ? frameHeight : frameWidth));
+                                frameToDisplayMatrix =
+                                        ImageUtils.getTransformationMatrix(
+                                                frameWidth,
+                                                frameHeight,
+                                                (int) (multiplier * (rotated ? frameHeight : frameWidth)),
+                                                (int) (multiplier * (rotated ? frameWidth : frameHeight)),
+                                                sensorOrientation,
+                                                false);
+                                final RectF positionOnDisplay = new RectF(result.getLocation());
+                                frameToDisplayMatrix.mapRect(positionOnDisplay);
+//
+//                                Log.e("maaaaap2", "" + positionOnDisplay);
+//                                Log.e("maaaaap1",""+ boundRect);
                                 mappedRecognitions.add(result);
+                                if(boundRect.left<positionOnDisplay.left && boundRect.right>positionOnDisplay.right
+                                    && boundRect.top<positionOnDisplay.top && boundRect.bottom>positionOnDisplay.bottom){
+//                                    Log.e("maaaaap3",""+ "Inside");
+                                    int areaofBounds=(int)((boundRect.left-boundRect.right)*(boundRect.top-boundRect.bottom));
+                                    int areaofDetected=(int)((positionOnDisplay.left-positionOnDisplay.right)*(positionOnDisplay.top-positionOnDisplay.bottom));
+                                    if(areaofDetected>areaofBounds/2.5){
+                                        Log.e("maaaaap",""+ "Just Right");
+                                    }else {
+                                        Log.e("maaaaap",""+ "Tooooo faaar");
+                                    }
+
+                                }else{
+//                                    Log.e("maaaaap4",""+ "Outside");
+                                }
 
 
                                 Bitmap croppedBmp = null;

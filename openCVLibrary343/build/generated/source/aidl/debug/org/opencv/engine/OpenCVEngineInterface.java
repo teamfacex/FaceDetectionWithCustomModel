@@ -1,6 +1,10 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
+<<<<<<< Updated upstream
  * Original file: /media/storage/Dev/real-stuff/FaceDetectionWithCustomModel/openCVLibrary343/src/main/aidl/org/opencv/engine/OpenCVEngineInterface.aidl
+=======
+ * Original file: /home/atul/tflite/openCVLibrary343/src/main/aidl/org/opencv/engine/OpenCVEngineInterface.aidl
+>>>>>>> Stashed changes
  */
 package org.opencv.engine;
 /**

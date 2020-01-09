@@ -16,11 +16,13 @@ package org.tensorflow.lite.examples.detection;
  * limitations under the License.
  */
 
+import android.annotation.SuppressLint;
 import android.app.Fragment;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PixelFormat;
+import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
@@ -43,6 +45,9 @@ import org.tensorflow.lite.examples.detection.customview.AutoFitTextureView;
 import org.tensorflow.lite.examples.detection.env.ImageUtils;
 import org.tensorflow.lite.examples.detection.env.Logger;
 
+import static org.tensorflow.lite.examples.detection.CameraConnectionFragment.chooseOptimalSize;
+
+@SuppressLint("ValidFragment")
 public class LegacyCameraConnectionFragment extends Fragment {
   private static final Logger LOGGER = new Logger();
   /** Conversion from screen rotation to JPEG orientation. */
@@ -54,10 +59,13 @@ public class LegacyCameraConnectionFragment extends Fragment {
     ORIENTATIONS.append(Surface.ROTATION_180, 270);
     ORIENTATIONS.append(Surface.ROTATION_270, 180);
   }
-
+  public RectF static_rectf;
   private Camera camera;
   private Camera.PreviewCallback imageListener;
+
+  private final ConnectionCallback cameraConnectionCallback;
   private Size desiredSize;
+  private Size previewSize;
   /** The layout identifier to inflate for this Fragment. */
   private int layout;
   /** An {@link AutoFitTextureView} for camera preview. */
@@ -73,6 +81,7 @@ public class LegacyCameraConnectionFragment extends Fragment {
             final SurfaceTexture texture, final int width, final int height) {
 
           int index = getCameraId();
+
           camera = Camera.open(index);
 
           try {
@@ -88,8 +97,8 @@ public class LegacyCameraConnectionFragment extends Fragment {
             for (Camera.Size size : cameraSizes) {
               sizes[i++] = new Size(size.width, size.height);
             }
-            Size previewSize =
-                CameraConnectionFragment.chooseOptimalSize(
+            previewSize =
+                chooseOptimalSize(
                     sizes, desiredSize.getWidth(), desiredSize.getHeight());
             parameters.setPreviewSize(previewSize.getWidth(), previewSize.getHeight());
             camera.setDisplayOrientation(90);
@@ -106,6 +115,7 @@ public class LegacyCameraConnectionFragment extends Fragment {
           textureView.setAspectRatio(s.height, s.width);
 
           camera.startPreview();
+          cameraConnectionCallback.onPreviewSizeChosen(previewSize, 270, static_rectf,width,height);
         }
 
         @Override
@@ -122,12 +132,22 @@ public class LegacyCameraConnectionFragment extends Fragment {
       };
   /** An additional thread for running tasks that shouldn't block the UI. */
   private HandlerThread backgroundThread;
-
-  public LegacyCameraConnectionFragment(
+  public static LegacyCameraConnectionFragment newInstance(
+          final ConnectionCallback callback,
+          final Camera.PreviewCallback imageListener,
+          final int layout,
+          final Size inputSize) {
+    return new LegacyCameraConnectionFragment(callback, imageListener, layout, inputSize);
+  }
+  public LegacyCameraConnectionFragment(final ConnectionCallback connectionCallback,
       final Camera.PreviewCallback imageListener, final int layout, final Size desiredSize) {
+    this.cameraConnectionCallback=connectionCallback;
     this.imageListener = imageListener;
     this.layout = layout;
     this.desiredSize = desiredSize;
+  }
+  public interface ConnectionCallback {
+    void onPreviewSizeChosen(Size size, int cameraRotation, RectF rectf, int width, int height);
   }
 
   @Override
@@ -158,6 +178,7 @@ public class LegacyCameraConnectionFragment extends Fragment {
         surfaceview.getHeight();
         Log.e("width",Float.toString(surfaceview.getWidth()*0.7f)+Float.toString(surfaceview.getHeight()*0.6f));
         Canvas canvas = surfaceHolder.lockCanvas();
+        static_rectf=new RectF(left,top,right,bottom);
         if (canvas == null) {
           Log.e("TAG", "Cannot draw onto the canvas as it's null");
         } else {
